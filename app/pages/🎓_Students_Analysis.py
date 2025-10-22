@@ -155,7 +155,7 @@ fig = px.line(x=avg_exam_marks.index, y=avg_exam_marks.values, markers=True,
 st.plotly_chart(fig, use_container_width=True)
 
 # ----------------------------------------------------------
-# SEMESTER MARKS PREDICTION & CREATE MERGED
+# SEMESTER MARKS PREDICTION (STUDENT LEVEL)
 # ----------------------------------------------------------
 subjects_df["semester_marks"] = (
     0.15*subjects_df["month1_marks"] + 0.15*subjects_df["month2_marks"] + 0.15*subjects_df["month3_marks"] +
@@ -164,7 +164,7 @@ subjects_df["semester_marks"] = (
 ).clip(0,100)
 
 marks_agg = subjects_df.groupby("student_id").mean(numeric_only=True).reset_index()
-merged = pd.merge(marks_agg, students_df, on="student_id", how="left")  # <-- merged exists now
+merged = pd.merge(marks_agg, students_df, on="student_id", how="left")  # merged exists now
 
 X_reg = merged[["month1_marks","month2_marks","month3_marks","model_marks","practicals_marks","attendance_pct","avg_study_hours"]]
 y_reg = merged["semester_marks"]
@@ -188,33 +188,71 @@ ax.set_title("Feature Importance (Semester Marks Prediction)")
 st.pyplot(fig)
 
 # ----------------------------------------------------------
+# PREDICT SEMESTER MARKS PER SUBJECT
+# ----------------------------------------------------------
+st.subheader("📈 Predicted Semester Marks per Subject")
+subjects_df = subjects_df.merge(students_df[["student_id","attendance_pct","avg_study_hours"]], on="student_id", how="left")
+
+pred_marks_list = []
+for subj in subjects_df["subject"].unique():
+    subj_df = subjects_df[subjects_df["subject"]==subj].copy()
+    X_subj = subj_df[["month1_marks","month2_marks","month3_marks","model_marks","practicals_marks","attendance_pct","avg_study_hours"]]
+    y_subj = 0.15*subj_df["month1_marks"] + 0.15*subj_df["month2_marks"] + 0.15*subj_df["month3_marks"] + \
+             0.25*subj_df["model_marks"] + 0.30*subj_df["practicals_marks"]
+    model_subj = RandomForestRegressor(n_estimators=120, random_state=42)
+    model_subj.fit(X_subj, y_subj)
+    subj_df["predicted_sem_marks"] = model_subj.predict(X_subj)
+    pred_marks_list.append(subj_df[["student_id","subject","predicted_sem_marks"]])
+
+pred_marks_df = pd.concat(pred_marks_list)
+st.dataframe(pred_marks_df.head(20))
+
+# ----------------------------------------------------------
 # INDIVIDUAL STUDENT MARKS TREND WITH PREDICTED SEMESTER MARK
 # ----------------------------------------------------------
-st.subheader("📈 Individual Student Marks Trend (Including Predicted Semester Marks)")
-sample_student_id = st.selectbox("Select Student ID", subjects_df["student_id"].unique())
+st.subheader("📈 Individual Student Marks Trend (Per Subject + Predicted Semester Marks)")
+sample_student_id = st.selectbox("Select Student ID for Subject-level Prediction", subjects_df["student_id"].unique())
 
-# Original student exam marks
-student_marks = subjects_df[subjects_df["student_id"]==sample_student_id].melt(
-    id_vars=["subject"], value_vars=["month1_marks","month2_marks","month3_marks","model_marks","practicals_marks"],
-    var_name="Exam", value_name="Marks")
-student_marks["student_id"] = sample_student_id
+student_subjects = pred_marks_df[pred_marks_df["student_id"]==sample_student_id].merge(
+    subjects_df[["student_id","subject","month1_marks","month2_marks","month3_marks","model_marks","practicals_marks"]],
+    on=["student_id","subject"]
+)
 
-# Predicted semester mark
-pred_sem_mark = merged.loc[merged["student_id"]==sample_student_id, "semester_marks"].values[0]
+# Melt exam marks
+plot_df = student_subjects.melt(
+    id_vars=["subject","predicted_sem_marks"], 
+    value_vars=["month1_marks","month2_marks","month3_marks","model_marks","practicals_marks"],
+    var_name="Exam", value_name="Marks"
+)
 
-# Add predicted semester marks as a separate row
-pred_df = pd.DataFrame({
-    "subject": ["Predicted Semester"],
-    "Exam": ["Semester Mark"],
-    "Marks": [pred_sem_mark],
-    "student_id": [sample_student_id]
-})
+# Add predicted semester marks as a separate row for each subject
+pred_sem_df = student_subjects[["subject","predicted_sem_marks"]].copy()
+pred_sem_df = pred_sem_df.rename(columns={"predicted_sem_marks":"Marks"})
+pred_sem_df["Exam"] = "Predicted Semester"
 
-student_marks_plot = pd.concat([student_marks, pred_df], ignore_index=True)
+plot_df = pd.concat([plot_df, pred_sem_df], ignore_index=True)
 
-fig = px.line(student_marks_plot, x="Exam", y="Marks", color="subject", markers=True,
-              hover_data=["student_id"], title=f"Marks Trend for Student ID: {sample_student_id}")
+fig = px.line(plot_df, x="Exam", y="Marks", color="subject", markers=True,
+              title=f"Student ID {sample_student_id} Marks Trend with Predicted Semester Marks")
 st.plotly_chart(fig, use_container_width=True)
+
+# ----------------------------------------------------------
+# SUBJECT-LEVEL PASS/FAIL PREDICTION
+# ----------------------------------------------------------
+# Merge predicted semester marks into subjects_df
+subjects_df = subjects_df.merge(pred_marks_df, on=["student_id","subject"], how="left")
+
+# Now create subject-level pass/fail
+st.subheader("🎯 Subject-level Pass/Fail Prediction (Threshold: 50 Marks + Attendance >=75%)")
+subjects_df["pass_fail_subject"] = np.where(
+    (subjects_df["predicted_sem_marks"] >=50) & (subjects_df["attendance_pct"]>=75),
+    "Pass","Fail"
+)
+st.dataframe(subjects_df[["student_id","subject","attendance_pct","predicted_sem_marks","pass_fail_subject"]])
+
+
+
+# The rest of your original code (At-Risk Analysis, Performance Prediction, Pass/Fail Student-level) remains unchanged
 
 # ----------------------------------------------------------
 # AT-RISK STUDENTS ANALYSIS

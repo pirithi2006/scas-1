@@ -1,4 +1,12 @@
 # ==========================================================
+# Model used :
+# RandomForestClassifier → Classification for overcrowding today.
+# Linear Regression + RandomForestRegressor + KNN Regressor → Regression for forecasting future overcrowding.
+# Ensemble approach is used to improve prediction stability.
+# Dashboard combines historical data, filtered visualization, and forecast predictions.
+# =========================================================
+
+# ==========================================================
 # 🏢 Facility Analytics Dashboard (Month Slider + Forecast + Formatting)
 # ==========================================================
 import streamlit as st

@@ -1,4 +1,12 @@
 # ==========================================================
+# Model used : 
+# Linear Regression: For simple linear trends (footfall + quantity)
+# Random Forest Regressor: Captures non-linear patterns in quantity data
+# Gradient Boosting Regressor: Refines quantity predictions by sequential learning
+# Ensemble: Combines all three for more accurate quantity forecasts
+# ==========================================================
+
+# ==========================================================
 # 🍴 Canteen Analytics Dashboard (Forecasting, Revenue, Event Impact)
 # Enhanced: time-slot charts, weather & footfall analysis, 90-day forecast & CSV export
 # ==========================================================

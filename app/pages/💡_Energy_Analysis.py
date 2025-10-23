@@ -1,3 +1,11 @@
+# =========================================================
+# Model	Type	Notes
+# Random Forest	Regression	Non-linear, robust
+# Linear Regression	Regression	Linear baseline
+# KNN Regressor	Regression	Similarity-based
+# SVR (RBF)	Regression	Non-linear, kernelized
+# ========================================================
+
 # ==========================================================
 # 💡 Energy Analytics Page
 # ==========================================================

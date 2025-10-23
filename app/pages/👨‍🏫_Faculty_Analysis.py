@@ -1,3 +1,10 @@
+# =========================================================
+# Model used :
+# Regression models are used for continuous prediction (workload hours).
+# Overload risk is derived post-prediction using a fixed threshold.
+# Dashboard provides both department-level insights and individual faculty risk analysis.
+# =========================================================
+
 # ==========================================================
 # 👨‍🏫 Faculty Workload Prediction Dashboard (Predicted Overload Risk + Department Charts)
 # ==========================================================

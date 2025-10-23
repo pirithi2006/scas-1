@@ -1,4 +1,10 @@
 # ==========================================================
+# Model used :
+# RandomForestRegressor → Predicts numeric marks.
+# RandomForestClassifier → Predicts categorical outcomes like pass/fail, performance levels, and at-risk status.
+# =========================================================
+
+# ==========================================================
 # 🎓 ENHANCED STUDENT ANALYTICS DASHBOARD WITH PERFORMANCE & PASS/FAIL PREDICTION
 # ==========================================================
 import streamlit as st

@@ -135,7 +135,7 @@ st.write(f"**Best Regression Model R²:** {workload_r2:.2f}, **MAE:** {workload_
 df['predicted_workload_hours'] = workload_model.predict(df[features])
 
 # ----------------- Overload Risk Based on Predicted Workload -----------------
-OVERLOAD_THRESHOLD = 30  # Adjust threshold if needed
+OVERLOAD_THRESHOLD = 28  # Adjust threshold if needed
 df['predicted_overload_risk'] = (df['predicted_workload_hours'] > OVERLOAD_THRESHOLD).astype(int)
 
 st.subheader("📊 Faculty Members at Risk (Based on Predicted Workload)")

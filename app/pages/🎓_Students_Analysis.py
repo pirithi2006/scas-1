@@ -12,9 +12,19 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.metrics import classification_report, confusion_matrix, mean_absolute_error, r2_score
 from db import get_table
 
-# PAGE TITLE
-st.set_page_config(layout="wide")
-st.title("🎓 Enhanced Student Analytics & Prediction Dashboard")
+
+# ==========================================================
+# ✅ Login & Role Check
+# ==========================================================
+if 'logged_in' not in st.session_state or not st.session_state['logged_in']:
+    st.error("⚠️ You must be logged in to access this page.")
+    st.page_link("👤_Login.py", label="🔑 Go to Login Page")
+    st.stop()
+
+role = st.session_state.get('role', 'guest')
+username = st.session_state.get('username', 'Unknown')
+faculty_dept = st.session_state.get('department', None)  # Faculty department
+st.caption(f"👤 Logged in as: **{username} ({role})**")
 
 # ----------------------------------------------------------
 # DATA LOADING
@@ -26,6 +36,18 @@ def load_data():
     return students, subjects
 
 students_df, subjects_df = load_data()
+
+
+# ==========================================================
+# Role-based department access
+# ==========================================================
+if role == "faculty":
+    if not faculty_dept:
+        st.error("⚠️ No department assigned to this faculty. Contact admin.")
+        st.stop()
+    students_df = students_df[students_df["department"] == faculty_dept]
+    subjects_df = subjects_df[subjects_df["department"] == faculty_dept] if "department" in subjects_df.columns else subjects_df
+    st.info(f"🔒 Faculty access: Viewing data for **{faculty_dept} department only**")
 
 # ----------------------------------------------------------
 # SIDEBAR FILTERS
@@ -40,10 +62,11 @@ if dept_filter != "All":
 if year_filter != "All":
     filtered_students = filtered_students[filtered_students["year"] == int(year_filter)]
 
+# PAGE TITLE
+st.title("🎓 Enhanced Student Analytics & Prediction Dashboard")
 # ----------------------------------------------------------
 # OVERVIEW
 # ----------------------------------------------------------
-st.subheader("📊 Overview")
 col1, col2 = st.columns(2)
 with col1:
     fig = px.histogram(filtered_students, x="avg_grade", nbins=20,

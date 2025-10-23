@@ -13,10 +13,26 @@ from sklearn.metrics import r2_score, mean_absolute_error
 from db import get_table
 import io
 
+
+# ==========================================================
+# ✅ Login & Role Check
+# ==========================================================
+if 'logged_in' not in st.session_state or not st.session_state['logged_in']:
+    st.error("⚠️ You must be logged in to access this page.")
+    st.page_link("👤_Login.py", label="🔑 Go to Login Page")
+    st.stop()
+
+role = st.session_state.get('role', 'guest')
+username = st.session_state.get('username', 'Unknown')
+st.caption(f"👤 Logged in as: **{username} ({role})**")
+
+if role != "admin":
+    st.warning("🔒 Only Admin users can access the Canteen Analysis page.")
+    st.stop()
+
 # ==========================================================
 # PAGE SETUP
 # ==========================================================
-st.set_page_config(page_title="Canteen Analytics Dashboard", layout="wide")
 st.title("🍴 Canteen Demand & Revenue Analysis ")
 
 # ==========================================================

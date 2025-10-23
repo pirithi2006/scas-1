@@ -12,10 +12,26 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.metrics import accuracy_score
 from db import get_table
 
+
+# ==========================================================
+# ✅ Login & Role Check
+# ==========================================================
+if 'logged_in' not in st.session_state or not st.session_state['logged_in']:
+    st.error("⚠️ You must be logged in to access this page.")
+    st.page_link("👤_Login.py", label="🔑 Go to Login Page")
+    st.stop()
+
+role = st.session_state.get('role', 'guest')
+username = st.session_state.get('username', 'Unknown')
+st.caption(f"👤 Logged in as: **{username} ({role})**")
+
+if role != "admin":
+    st.warning("🔒 Only Admin users can access the Facility Analysis page.")
+    st.stop()
+
 # ==========================================================
 # ⚙️ PAGE SETUP
 # ==========================================================
-st.set_page_config(page_title="Facility Analytics Dashboard", layout="wide")
 st.title("🏢 Facility Usage & Overcrowding Risk Dashboard")
 
 # ==========================================================
@@ -220,9 +236,11 @@ if "overcrowded" in df_full.columns:
 
         # Forecast next 6 months
         future_idx = np.arange(len(sub_df), len(sub_df) + 6).reshape(-1, 1)
-        preds_lr = lr.predict(future_idx)
-        preds_rf = rf.predict(future_idx)
-        preds_knn = knn.predict(future_idx)
+        future_idx_df = pd.DataFrame(future_idx, columns=X.columns)  # <-- Fix here
+
+        preds_lr = lr.predict(future_idx_df)
+        preds_rf = rf.predict(future_idx_df)
+        preds_knn = knn.predict(future_idx_df)
 
         # Ensemble average
         ensemble_pred = (preds_lr + preds_rf + preds_knn) / 3
